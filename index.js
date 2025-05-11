@@ -45,7 +45,7 @@ function startServer(options) {
     
     const socksPort = proxyOptions.socksPort || 1080;
     
-    const server = socksv5.createServer({}, (info, accept, deny) => {
+    const server = socksv5.createServer((info, accept, deny) => {
         console.log(`프록시 연결: ${info.dstAddr}:${info.dstPort}`);
         
         if (workerPool.getPoolSize() === 0) {
