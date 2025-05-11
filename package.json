@@ -22,8 +22,8 @@
   },
   "homepage": "https://github.com/dongmuni/elastic-socks-proxy#readme",
   "dependencies": {
-    "@dongmuni/nodejs-util": "*",
-    "@dongmuni/nodejs-text-net": "*",
-    "socks": "^2.7.1"
+    "@dongmuni/nodejs-text-net": "^0.1.5",
+    "@dongmuni/nodejs-util": "^0.1.2",
+    "socks": "^2.8.4"
   }
 }
