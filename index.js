@@ -8,7 +8,7 @@
 
 const config = require('./config');
 const textNet = require('@dongmuni/nodejs-text-net');
-const socks5 = require('socksv5');
+const socksv5 = require('socksv5');
 const util = require('@dongmuni/nodejs-util');
 const net = require('net');
 
@@ -45,7 +45,7 @@ function startServer(options) {
     
     const socksPort = proxyOptions.socksPort || 1080;
     
-    const server = socks5.createServer({}, (info, accept, deny) => {
+    const server = socksv5.createServer({}, (info, accept, deny) => {
         console.log(`프록시 연결: ${info.dstAddr}:${info.dstPort}`);
         
         if (workerPool.getPoolSize() === 0) {
