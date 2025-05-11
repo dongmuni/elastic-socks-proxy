@@ -53,7 +53,14 @@ function startServer(options) {
         });
     });
     
-    const socksServer = new socksLib.SocksServer((info, accept, deny) => {
+    const socksPort = proxyOptions.socksPort || 1080;
+    const socksOptions = {
+        authMethods: [0], // No auth
+        port: socksPort,
+        host: '0.0.0.0'
+    };
+    
+    const socksServer = socksLib.createServer((info, accept, deny) => {
         if (workerPool.getWorkerCount() === 0) {
             console.log('가용한 워커가 없습니다. 직접 연결을 처리합니다');
             handleSocksConnection(info, accept, deny);
@@ -63,7 +70,6 @@ function startServer(options) {
         }
     });
     
-    const socksPort = proxyOptions.socksPort || 1080;
     socksServer.listen(socksPort, '0.0.0.0', () => {
         console.log(`SOCKS 프록시 서버가 포트 ${socksPort}에서 수신 중입니다`);
     });
