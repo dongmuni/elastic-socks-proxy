@@ -24,6 +24,7 @@
   "dependencies": {
     "@dongmuni/nodejs-text-net": "^0.1.5",
     "@dongmuni/nodejs-util": "^0.1.2",
-    "socks": "^2.8.4"
+    "socks": "^2.8.4",
+    "socksv5": "^0.0.6"
   }
 }
