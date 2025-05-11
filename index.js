@@ -1,7 +1,7 @@
 
 /**
  * elastic-socks-proxy
- * A distributed SOCKS proxy with worker support
+ * 워커 지원 분산 SOCKS 프록시
  */
 
 'use strict';
@@ -13,7 +13,7 @@ const util = require('@dongmuni/nodejs-util');
 const net = require('net');
 
 if (process.argv.length < 3) {
-    console.log(`USAGE: ${process.argv[0]} ${process.argv[1]} (server|worker)`);
+    console.log(`사용법: ${process.argv[0]} ${process.argv[1]} (server|worker)`);
     process.exit(-1);
 }
 
@@ -24,17 +24,17 @@ if (appType === 'server') {
 } else if (appType === 'worker') {
     startWorker(config.workerOptions);
 } else {
-    console.log(`Unknown app type: ${appType}`);
-    console.log(`USAGE: ${process.argv[0]} ${process.argv[1]} (server|worker)`);
+    console.log(`알 수 없는 앱 유형: ${appType}`);
+    console.log(`사용법: ${process.argv[0]} ${process.argv[1]} (server|worker)`);
     process.exit(-1);
 }
 
 /**
- * Start the SOCKS proxy server
- * @param {Object} options - Server configuration options
+ * SOCKS 프록시 서버 시작
+ * @param {Object} options - 서버 설정 옵션
  */
 function startServer(options) {
-    console.log('Starting SOCKS proxy server...');
+    console.log('SOCKS 프록시 서버를 시작합니다...');
     
     const textNetOptions = options.textNetOptions || {};
     const proxyOptions = options.proxyOptions || {};
@@ -44,28 +44,28 @@ function startServer(options) {
     });
     
     const textNetServer = textNet.startWorkerPoolServer(textNetOptions, (client) => {
-        console.log(`Worker connected: ${client.remoteAddress}:${client.remotePort}`);
+        console.log(`워커 연결됨: ${client.remoteAddress}:${client.remotePort}`);
         workerPool.addWorker(client);
         
         client.on('close', () => {
-            console.log(`Worker disconnected: ${client.remoteAddress}:${client.remotePort}`);
+            console.log(`워커 연결 해제됨: ${client.remoteAddress}:${client.remotePort}`);
             workerPool.removeWorker(client);
         });
     });
     
     const socksServer = new socksLib.SocksServer((info, accept, deny) => {
         if (workerPool.getWorkerCount() === 0) {
-            console.log('No workers available, handling connection directly');
+            console.log('가용한 워커가 없습니다. 직접 연결을 처리합니다');
             handleSocksConnection(info, accept, deny);
         } else {
-            console.log('Distributing connection to worker');
+            console.log('워커에게 연결을 분배합니다');
             distributeToWorker(workerPool, info, accept, deny);
         }
     });
     
     const socksPort = proxyOptions.socksPort || 1080;
     socksServer.listen(socksPort, '0.0.0.0', () => {
-        console.log(`SOCKS proxy server listening on port ${socksPort}`);
+        console.log(`SOCKS 프록시 서버가 포트 ${socksPort}에서 수신 중입니다`);
     });
     
     function handleSocksConnection(info, accept, deny) {
@@ -81,18 +81,18 @@ function startServer(options) {
             destination.pipe(socket);
             
             socket.on('error', (err) => {
-                console.error(`Client socket error: ${err.message}`);
+                console.error(`클라이언트 소켓 오류: ${err.message}`);
                 destination.destroy();
             });
             
             destination.on('error', (err) => {
-                console.error(`Destination socket error: ${err.message}`);
+                console.error(`대상 소켓 오류: ${err.message}`);
                 socket.destroy();
             });
         });
         
         destination.on('error', (err) => {
-            console.error(`Failed to connect to destination: ${err.message}`);
+            console.error(`대상에 연결 실패: ${err.message}`);
             deny();
         });
     }
@@ -101,7 +101,7 @@ function startServer(options) {
         const worker = workerPool.selectWorker();
         
         if (!worker) {
-            console.log('No worker available, handling connection directly');
+            console.log('가용한 워커가 없습니다. 직접 연결을 처리합니다');
             handleSocksConnection(info, accept, deny);
             return;
         }
@@ -113,7 +113,7 @@ function startServer(options) {
         ]);
         
         session.on('error', (err) => {
-            console.error(`Session error: ${err.message}`);
+            console.error(`세션 오류: ${err.message}`);
             deny();
         });
         
@@ -124,7 +124,7 @@ function startServer(options) {
             session.pipe(socket);
             
             socket.on('error', (err) => {
-                console.error(`Client socket error: ${err.message}`);
+                console.error(`클라이언트 소켓 오류: ${err.message}`);
                 session.destroy();
             });
             
@@ -140,17 +140,17 @@ function startServer(options) {
 }
 
 /**
- * Start a worker process
- * @param {Object} options - Worker configuration options
+ * 워커 프로세스 시작
+ * @param {Object} options - 워커 설정 옵션
  */
 function startWorker(options) {
-    console.log('Starting SOCKS proxy worker...');
+    console.log('SOCKS 프록시 워커를 시작합니다...');
     
     const textNetOptions = options.textNetOptions || {};
     const proxyOptions = options.proxyOptions || {};
     
     const client = textNet.autoReconnect(textNetOptions, (client) => {
-        console.log(`Connected to server: ${client.remoteAddress}:${client.remotePort}`);
+        console.log(`서버에 연결됨: ${client.remoteAddress}:${client.remotePort}`);
         
         if (textNetOptions.autoRegister) {
             client.sendMessage('RGST', 0, [], null);
@@ -161,19 +161,19 @@ function startWorker(options) {
             const port = parseInt(util.encoder.decodeText(args[1]), 10);
             const command = util.encoder.decodeText(args[2]);
             
-            console.log(`Handling SOCKS connection to ${host}:${port}`);
+            console.log(`${host}:${port}로의 SOCKS 연결 처리 중`);
             
             const destination = net.createConnection({
                 host: host,
                 port: port
             }, () => {
-                console.log(`Connected to destination: ${host}:${port}`);
+                console.log(`대상에 연결됨: ${host}:${port}`);
                 
                 session.pipe(destination);
                 destination.pipe(session);
                 
                 destination.on('error', (err) => {
-                    console.error(`Destination socket error: ${err.message}`);
+                    console.error(`대상 소켓 오류: ${err.message}`);
                     session.destroy();
                 });
                 
@@ -183,12 +183,12 @@ function startWorker(options) {
             });
             
             destination.on('error', (err) => {
-                console.error(`Failed to connect to destination: ${err.message}`);
+                console.error(`대상에 연결 실패: ${err.message}`);
                 session.destroy();
             });
             
             session.on('error', (err) => {
-                console.error(`Session error: ${err.message}`);
+                console.error(`세션 오류: ${err.message}`);
                 if (destination) {
                     destination.destroy();
                 }

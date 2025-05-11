@@ -1,109 +1,109 @@
-# elastic-socks-proxy Implementation Details
+# elastic-socks-proxy 구현 세부 사항
 
-## Project Structure
+## 프로젝트 구조
 
-The elastic-socks-proxy project has been implemented with the following structure:
+elastic-socks-proxy 프로젝트는 다음과 같은 구조로 구현되었습니다:
 
 ```
 elastic-socks-proxy/
-├── package.json         # Project metadata and dependencies
-├── index.js             # Main entry point with server and worker implementations
-├── config.js            # Environment detection and configuration loading
-├── config-local.js      # Configuration for local development
-└── README.md            # Project documentation
+├── package.json         # 프로젝트 메타데이터 및 의존성
+├── index.js             # 서버 및 워커 구현이 포함된 메인 진입점
+├── config.js            # 환경 감지 및 설정 로딩 로직
+├── config-local.js      # 로컬 개발 환경을 위한 설정
+└── README.md            # 프로젝트 문서화
 ```
 
-## Implementation Overview
+## 구현 개요
 
-The implementation follows a similar pattern to elastic-http-proxy but is adapted for the SOCKS protocol. It uses nodejs-text-net for communication between the server and workers, allowing for distributed operation.
+이 구현은 elastic-http-proxy와 유사한 패턴을 따르지만 SOCKS 프로토콜에 맞게 조정되었습니다. 서버와 워커 간의 통신에는 nodejs-text-net을 사용하여 분산 운영이 가능하도록 했습니다.
 
-### Key Components
+### 주요 구성 요소
 
-1. **Server Mode**
-   - Creates a SOCKS server using the 'socks' library
-   - Sets up a TextNet server for worker communication
-   - Manages a worker pool for distributing connections
-   - Handles connections directly if no workers are available
-   - Distributes connections to workers when available
+1. **서버 모드**
+   - 'socks' 라이브러리를 사용하여 SOCKS 서버 생성
+   - 워커 통신을 위한 TextNet 서버 설정
+   - 연결 분배를 위한 워커 풀 관리
+   - 워커가 없을 경우 직접 연결 처리
+   - 워커가 있을 경우 연결 분배
 
-2. **Worker Mode**
-   - Connects to the server using TextNet
-   - Registers itself as a worker
-   - Handles SOCKS sessions assigned by the server
-   - Establishes connections to requested destinations
-   - Proxies data between the client and destination
+2. **워커 모드**
+   - TextNet을 사용하여 서버에 연결
+   - 자신을 워커로 등록
+   - 서버에서 할당한 SOCKS 세션 처리
+   - 요청된 대상에 연결 설정
+   - 클라이언트와 대상 간의 데이터 프록시
 
-3. **Configuration System**
-   - Environment-aware configuration loading
-   - Separate configurations for server and worker modes
-   - Configurable ports, logging, and timeouts
+3. **설정 시스템**
+   - 환경 인식 설정 로딩
+   - 서버 및 워커 모드를 위한 별도 설정
+   - 포트, 로깅, 타임아웃 등 설정 가능
 
-## How It Works
+## 작동 방식
 
-1. **Server Operation**
-   - The server listens for SOCKS client connections on the configured port (default: 1080)
-   - When a client connects, the server selects a worker from the pool
-   - The server creates a session with the worker and passes the connection details
-   - If no workers are available, the server handles the connection directly
+1. **서버 작동**
+   - 서버는 설정된 포트(기본값: 1080)에서 SOCKS 클라이언트 연결을 수신
+   - 클라이언트가 연결하면 서버는 풀에서 워커를 선택
+   - 서버는 워커와 세션을 생성하고 연결 세부 정보를 전달
+   - 워커가 없으면 서버가 직접 연결 처리
 
-2. **Worker Operation**
-   - Workers connect to the server and register themselves
-   - When assigned a session, the worker establishes a connection to the requested destination
-   - The worker then proxies data between the session and the destination
-   - If the connection fails, the worker reports the error back to the server
+2. **워커 작동**
+   - 워커는 서버에 연결하고 자신을 등록
+   - 세션이 할당되면 워커는 요청된 대상에 연결 설정
+   - 워커는 세션과 대상 간의 데이터를 프록시
+   - 연결이 실패하면 워커는 오류를 서버에 보고
 
-3. **Communication Protocol**
-   - Server-worker communication uses the text-based protocol provided by nodejs-text-net
-   - Workers register using the 'RGST' command
-   - SOCKS connections are handled through sessions with the 'SOCKS' protocol
-   - Session arguments include the destination host, port, and command
+3. **통신 프로토콜**
+   - 서버-워커 통신은 nodejs-text-net이 제공하는 텍스트 기반 프로토콜 사용
+   - 워커는 'RGST' 명령을 사용하여 등록
+   - SOCKS 연결은 'SOCKS' 프로토콜을 가진 세션을 통해 처리
+   - 세션 인수에는 대상 호스트, 포트, 명령이 포함
 
-## Usage Instructions
+## 사용 지침
 
-### Installation
+### 설치
 
-Before running the project, install the dependencies:
+프로젝트를 실행하기 전에 의존성을 설치하세요:
 
 ```bash
 cd elastic-socks-proxy
 npm install
 ```
 
-### Running the Server
+### 서버 실행
 
 ```bash
 node index.js server
 ```
 
-### Running a Worker
+### 워커 실행
 
 ```bash
 node index.js worker
 ```
 
-### Testing
+### 테스트
 
-To test the proxy, configure a SOCKS client (like a browser or curl) to use the proxy at localhost:1080.
+프록시를 테스트하려면 SOCKS 클라이언트(브라우저나 curl 등)를 localhost:1080을 사용하도록 설정하세요.
 
-Example with curl:
+curl을 사용한 예시:
 
 ```bash
 curl --socks5 localhost:1080 https://example.com
 ```
 
-## Next Steps
+## 다음 단계
 
-1. **Additional Configuration Files**
-   - Create config-dev.js and config-live.js for different environments
+1. **추가 설정 파일**
+   - 다양한 환경을 위한 config-dev.js 및 config-live.js 생성
 
-2. **Enhanced Logging**
-   - Implement more detailed logging for debugging and monitoring
+2. **향상된 로깅**
+   - 디버깅 및 모니터링을 위한 더 자세한 로깅 구현
 
-3. **Authentication**
-   - Add SOCKS authentication support
+3. **인증**
+   - SOCKS 인증 지원 추가
 
-4. **Performance Optimization**
-   - Implement connection pooling and other optimizations
+4. **성능 최적화**
+   - 연결 풀링 및 기타 최적화 구현
 
-5. **Metrics and Monitoring**
-   - Add metrics collection for monitoring proxy performance
+5. **메트릭 및 모니터링**
+   - 프록시 성능 모니터링을 위한 메트릭 수집 추가

@@ -1,6 +1,6 @@
 
 /**
- * Configuration loader for elastic-socks-proxy
+ * elastic-socks-proxy를 위한 설정 로더
  */
 
 'use strict';
@@ -14,12 +14,12 @@ const os = require('os');
 const hostname = os.hostname();
 const env = envmap[hostname] || 'dev';
 
-console.log(`Loading configuration for environment: ${env}`);
+console.log(`환경에 맞는 설정을 로드합니다: ${env}`);
 
 try {
     module.exports = require(`./config-${env}`);
 } catch (e) {
-    console.error(`Failed to load configuration for environment ${env}: ${e.message}`);
-    console.log('Falling back to local configuration');
+    console.error(`${env} 환경에 대한 설정 로드 실패: ${e.message}`);
+    console.log('로컬 설정으로 폴백합니다');
     module.exports = require('./config-local');
 }

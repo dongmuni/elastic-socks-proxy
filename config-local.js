@@ -1,6 +1,6 @@
 
 /**
- * Local development configuration for elastic-socks-proxy
+ * elastic-socks-proxy를 위한 로컬 개발 환경 설정
  */
 
 'use strict';
