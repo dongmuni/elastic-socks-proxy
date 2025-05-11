@@ -25,9 +25,8 @@ module.exports = {
     
     workerOptions: {
         textNetOptions: {
-            serverAddresses: [
-                { host: 'localhost', port: 8081 }
-            ],
+            host: 'localhost',
+            port: 8081,
             autoRegister: true,
             idlePingTimeout: 30000,
             reconnectInterval: 3000,

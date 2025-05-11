@@ -8,7 +8,7 @@
 
 const config = require('./config');
 const textNet = require('@dongmuni/nodejs-text-net');
-const socksLib = require('socks');
+const socksv5 = require('socksv5');
 const util = require('@dongmuni/nodejs-util');
 const net = require('net');
 
@@ -39,83 +39,75 @@ function startServer(options) {
     const textNetOptions = options.textNetOptions || {};
     const proxyOptions = options.proxyOptions || {};
     
-    const workerPool = textNet.createWorkerPool({
-        autoRegister: true
-    });
-    
-    const textNetServer = textNet.startWorkerPoolServer(textNetOptions, (client) => {
-        console.log(`워커 연결됨: ${client.remoteAddress}:${client.remotePort}`);
-        workerPool.addWorker(client);
-        
-        client.on('close', () => {
-            console.log(`워커 연결 해제됨: ${client.remoteAddress}:${client.remotePort}`);
-            workerPool.removeWorker(client);
-        });
+    const workerPool = textNet.startWorkerPoolServer(textNetOptions, (server) => {
+        console.log(`워커 풀 서버가 시작되었습니다`);
     });
     
     const socksPort = proxyOptions.socksPort || 1080;
-    const socksOptions = {
-        authMethods: [0], // No auth
-        port: socksPort,
-        host: '0.0.0.0'
-    };
     
-    const socksServer = socksLib.createServer((info, accept, deny) => {
-        if (workerPool.getWorkerCount() === 0) {
+    const server = socksv5.createServer((info, accept, deny) => {
+        console.log(`프록시 연결: ${info.dstAddr}:${info.dstPort}`);
+        
+        if (workerPool.getPoolSize() === 0) {
             console.log('가용한 워커가 없습니다. 직접 연결을 처리합니다');
-            handleSocksConnection(info, accept, deny);
+            const socket = accept(true);
+            
+            const destination = net.createConnection({
+                host: info.dstAddr,
+                port: info.dstPort
+            }, () => {
+                socket.pipe(destination);
+                destination.pipe(socket);
+            });
+            
+            destination.on('error', (err) => {
+                console.error(`대상 연결 오류: ${err.message}`);
+                socket.end();
+            });
         } else {
             console.log('워커에게 연결을 분배합니다');
             distributeToWorker(workerPool, info, accept, deny);
         }
     });
     
-    socksServer.listen(socksPort, '0.0.0.0', () => {
+    server.listen(socksPort, '0.0.0.0', () => {
         console.log(`SOCKS 프록시 서버가 포트 ${socksPort}에서 수신 중입니다`);
     });
     
-    function handleSocksConnection(info, accept, deny) {
-        const { host, port } = info.destination;
-        
-        const destination = net.createConnection({
-            host: host,
-            port: port
-        }, () => {
-            const socket = accept(true);
-            
-            socket.pipe(destination);
-            destination.pipe(socket);
-            
-            socket.on('error', (err) => {
-                console.error(`클라이언트 소켓 오류: ${err.message}`);
-                destination.destroy();
-            });
-            
-            destination.on('error', (err) => {
-                console.error(`대상 소켓 오류: ${err.message}`);
-                socket.destroy();
-            });
-        });
-        
-        destination.on('error', (err) => {
-            console.error(`대상에 연결 실패: ${err.message}`);
-            deny();
-        });
-    }
-    
+    /**
+     * 워커에게 연결 분배
+     * @param {Object} workerPool - 워커 풀
+     * @param {Object} info - 연결 정보
+     * @param {Function} accept - 연결 수락 함수
+     * @param {Function} deny - 연결 거부 함수
+     */
     function distributeToWorker(workerPool, info, accept, deny) {
-        const worker = workerPool.selectWorker();
+        const worker = workerPool.getNextClient();
         
         if (!worker) {
             console.log('가용한 워커가 없습니다. 직접 연결을 처리합니다');
-            handleSocksConnection(info, accept, deny);
+            const socket = accept(true);
+            
+            const destination = net.createConnection({
+                host: info.dstAddr,
+                port: info.dstPort
+            }, () => {
+                socket.pipe(destination);
+                destination.pipe(socket);
+            });
+            
+            destination.on('error', (err) => {
+                console.error(`대상 연결 오류: ${err.message}`);
+                socket.end();
+            });
+            
             return;
         }
         
         const session = worker.createSession('SOCKS', [
-            info.destination.host,
-            info.destination.port.toString(),
-            info.command
+            info.dstAddr,
+            info.dstPort.toString(),
+            info.cmd
         ]);
         
         session.on('error', (err) => {
@@ -139,7 +131,7 @@ function startServer(options) {
             });
             
             session.on('close', () => {
-                socket.destroy();
+                socket.end();
             });
         });
     }
