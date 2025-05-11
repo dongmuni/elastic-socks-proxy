@@ -1,0 +1,29 @@
+{
+  "name": "@dongmuni/elastic-socks-proxy",
+  "version": "0.1.0",
+  "description": "Elastic SOCKS proxy with distributed worker support",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dongmuni/elastic-socks-proxy.git"
+  },
+  "keywords": [
+    "socks",
+    "proxy",
+    "elastic"
+  ],
+  "author": "Dongmoon Lim <dongmuni@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dongmuni/elastic-socks-proxy/issues"
+  },
+  "homepage": "https://github.com/dongmuni/elastic-socks-proxy#readme",
+  "dependencies": {
+    "@dongmuni/nodejs-util": "*",
+    "@dongmuni/nodejs-text-net": "*",
+    "socks": "^2.7.1"
+  }
+}
