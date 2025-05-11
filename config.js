@@ -7,7 +7,8 @@
 
 const envmap = {
     'localhost': 'local',
-    '127.0.0.1': 'local'
+    '127.0.0.1': 'local',
+    'imdongmuns-MacBook-Pro.local': 'local'
 };
 
 const os = require('os');
